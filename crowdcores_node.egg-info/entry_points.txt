@@ -1,2 +1,2 @@
 [console_scripts]
-ccnode = crowdcores_node.node:main
+crowdcores-node = crowdcores_node.manager:main

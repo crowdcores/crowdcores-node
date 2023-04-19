@@ -4,6 +4,7 @@ import time
 import json
 import torch
 from transformers import pipeline
+import sys
 
 model_names=[];
 models_pipelines={};
@@ -89,6 +90,7 @@ async def receive_loop(websocket):
 
 async def send_loop(websocket):
     while True:
+        print("sending");
         await asyncio.sleep(15)
         data = {'command': 'ping'}
         await websocket.send(json.dumps(data))

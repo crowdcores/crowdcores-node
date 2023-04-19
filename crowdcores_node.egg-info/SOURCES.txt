@@ -1,6 +1,9 @@
+LICENSE.txt
+README.md
 setup.py
 crowdcores_node/__init__.py
-crowdcores_node/node.py
+crowdcores_node/crowdcores_node.py
+crowdcores_node/manager.py
 crowdcores_node.egg-info/PKG-INFO
 crowdcores_node.egg-info/SOURCES.txt
 crowdcores_node.egg-info/dependency_links.txt

@@ -6,6 +6,34 @@ import torch
 from transformers import pipeline
 import sys
 
+#polyfills for earlier  versions of python
+try:
+    asyncio.create_task
+except AttributeError:
+    def asyncio_create_task(coro, *, loop=None):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        return loop.create_task(coro)
+else:
+    asyncio_create_task = asyncio.create_task
+
+try:
+    asyncio.run
+except AttributeError:
+    def asyncio_run(coroutine, debug=False):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coroutine)
+        finally:
+            loop.close()
+else:
+    asyncio_run = asyncio.run
+
+
+
+
+
 model_names=[];
 models_pipelines={};
 
@@ -15,14 +43,15 @@ async def run_async(func, *args, **kwargs):
     return result
 
 def do_process_pipeline_request(websocket,message):
+    print("processing");
     try:
-        
+
         if torch.cuda.is_available():
             device_id=0;
         else:
             device_id=-1;
 
-        request_data = message['pipeline_data'] 
+        request_data = message['pipeline_data']
         args=request_data["args"];
         kwargs=request_data["kwargs"];
         init_args=request_data["init_args"];
@@ -65,8 +94,9 @@ def load_models(websocket):
     for model_name, model_data in model_names.items():
         print("Loading Model:",model_name);
         try:
-            pipeline(model=model_name,device=-1)
-        except :
+            pipeline(model=model_name,task=model_data['pipeline_tag'])
+        except Exception as e:
+            print(repr(e))
             print('Model could not load, skipping download...')
 
 
@@ -82,15 +112,15 @@ async def receive_loop(websocket):
         if message_json['command'] == 'got_models_names_list':
             global model_names
             model_names=message_json['model_names_list']
-            asyncio.create_task(init_load_models(websocket))
+            asyncio_create_task(init_load_models(websocket))
 
         if message_json['command'] == 'process_pipeline_request':
-            asyncio.create_task(process_pipeline_request(websocket,message_json))
+            asyncio_create_task(process_pipeline_request(websocket,message_json))
 
 
 async def send_loop(websocket):
     while True:
-        print("sending");
+        #print("sending");
         await asyncio.sleep(15)
         data = {'command': 'ping'}
         await websocket.send(json.dumps(data))
@@ -103,9 +133,9 @@ async def client():
     while True:
         try:
             async with websockets.connect("ws://ws.crowdcores.com") as websocket:
-                consumer_task=asyncio.create_task(receive_loop(websocket))
-                producer_task=asyncio.create_task(send_loop(websocket))
-                asyncio.create_task(start_node(websocket))
+                consumer_task=asyncio_create_task(receive_loop(websocket))
+                producer_task=asyncio_create_task(send_loop(websocket))
+                asyncio_create_task(start_node(websocket))
                 done, pending = await asyncio.wait(
                     [consumer_task,producer_task],
                     return_when=asyncio.FIRST_COMPLETED,
@@ -119,8 +149,11 @@ async def client():
             print("Retrying in 5 seconds...")
             time.sleep(5)
 
+
+
 def main():
-    asyncio.run(client())
+    asyncio_run(client())
 
 if __name__ == "__main__":
     main()
+

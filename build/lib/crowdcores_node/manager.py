@@ -48,6 +48,11 @@ def connect():
 
 def update():
     subprocess.call(['pip', 'install', '--upgrade','--no-deps', 'crowdcores-node'])
+
+def restart():
+    stop();
+    start();
+#
 ##print("Connecting to service...")
 ##pid = get_pid()
 ##if not pid:

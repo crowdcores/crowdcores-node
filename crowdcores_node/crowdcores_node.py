@@ -5,6 +5,7 @@ import json
 import torch
 from transformers import pipeline
 import sys
+import os
 
 #polyfills for earlier  versions of python
 try:
@@ -29,7 +30,6 @@ except AttributeError:
             loop.close()
 else:
     asyncio_run = asyncio.run
-
 
 
 
@@ -80,7 +80,7 @@ def do_process_pipeline_request(websocket,message):
 
 async def process_pipeline_request(websocket,message):
     response = await run_async(do_process_pipeline_request,websocket,message)
-    data = {'command': 'completed_pipeline_request','pipeline_response':response}
+    data = {'command': 'completed_pipeline_request','pipeline_response':response,'pipeline_request':message}
     await websocket.send(json.dumps(data))
 
 
@@ -127,6 +127,9 @@ async def send_loop(websocket):
 
 async def start_node(websocket):
         data = {'command': 'node_started'}
+        API_KEY = os.getenv('CROWDCORES_API_KEY');
+        if API_KEY:
+            data['api_key']=API_KEY;
         await websocket.send(json.dumps(data))
 
 async def client():

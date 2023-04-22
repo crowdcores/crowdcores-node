@@ -8,7 +8,7 @@ setup(
         'websockets',
         'torch',
         'transformers',
-
+        'psutil',
     ],
     entry_points={
         'console_scripts': [

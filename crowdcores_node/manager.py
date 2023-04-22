@@ -36,7 +36,12 @@ def stop():
         print("CrowdCore Node is not running.")
 
 def connect():
-    print("Connecting to CrowdCore Node...")
+    if get_pid():
+        print("CrowdCore Node is currently running...")
+        print("Connecting to CrowdCore Node...")
+    else:
+        print("CrowdCore Node is not running. Any logs below are probably from a previous run.")
+        print("Showing CrowdCore Node logs...")
     with open(node_out_put_file, 'r') as f:
         while True:
             line = f.readline().strip()

@@ -3,6 +3,7 @@ import subprocess
 import os
 import time
 import signal
+import psutil
 
 
 node_out_put_file="/tmp/crowdcores_log.txt"
@@ -57,37 +58,13 @@ def update():
 def restart():
     stop();
     start();
-#
-##print("Connecting to service...")
-##pid = get_pid()
-##if not pid:
-##    print("Service is not running.")
-##    return
-##process = subprocess.Popen(["tail", "-f", f"/proc/{pid}/fd/1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-##for line in iter(process.stdout.readline, b''):
-##    print(line.decode("utf-8").strip())
-     
-
-  ##for line in iter(process.stdout.readline, b''):
-  ##    print("got a line");
-  ##    print(line.decode("utf-8").strip())
 
 def get_pid():
-    process = subprocess.Popen(["pgrep", "-f", "crowdcores_node.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    pid, error = process.communicate()
-    if not pid:
-        return None
-    pid = pid.decode("utf-8").strip()
-    return int(pid)
-
-##  def get_pid():
-##      process = subprocess.Popen(["pgrep", "-f", "my_script.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-##      pid, error = process.communicate()
-##      if not pid:
-##          return None
-##      pid = pid.decode("utf-8").strip()
-##      pids = pid.split('\n')
-##      return int(pids[0])
+    for proc in psutil.process_iter():
+        # concatenate the cmdline elements into a single string to search for crowdcores_node.py
+        if 'crowdcores_node.py' in ' '.join(proc.cmdline()):
+            return proc.pid
+    return None
 
 
 def main():

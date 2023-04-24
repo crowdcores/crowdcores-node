@@ -6,6 +6,7 @@ import torch
 from transformers import pipeline
 import sys
 import os
+import gc
 
 #polyfills for earlier  versions of python
 try:
@@ -68,6 +69,9 @@ def do_process_pipeline_request(websocket,message):
             "pipeline_response_result":r
         }
         print("Completed pipeline request:",task,"-",model_name)
+        del model_pipeline
+        gc.collect()
+
         return response;
     except Exception as e:
         response={
@@ -79,7 +83,8 @@ def do_process_pipeline_request(websocket,message):
 
 
 async def process_pipeline_request(websocket,message):
-    response = await run_async(do_process_pipeline_request,websocket,message)
+    #response = await run_async(do_process_pipeline_request,websocket,message)
+    response =  do_process_pipeline_request(websocket,message)
     data = {'command': 'completed_pipeline_request','pipeline_response':response,'pipeline_request':message}
     await websocket.send(json.dumps(data))
 

@@ -6,24 +6,20 @@ import signal
 import psutil
 
 
-node_out_put_file="/tmp/crowdcores_log.txt"
-
-#os.environ["PYTHONUNBUFFERED"] = "1"
+# os.environ["PYTHONUNBUFFERED"] = "1"
 def start():
     pid = get_pid()
     if pid:
         print("CrowdCore Node is already running...")
-        return;
- 
+        return
 
     print("Checking for Updates...")
     update()
     print("Starting CrowdCore Node...")
-
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    node_path = os.path.join(script_dir,"crowdcores_node.py")
+    node_path = os.path.join(script_dir, "crowdcores_node.py")
 
-    with open(node_out_put_file, 'w') as f:
+    with open(cc_log_path(), 'w') as f:
         process = subprocess.Popen(["python3","-u",node_path], stdout=f, stderr=f)
     print("CrowdCore Node started with PID:", process.pid)
 
@@ -43,7 +39,7 @@ def connect():
     else:
         print("CrowdCore Node is not running. Any logs below are probably from a previous run.")
         print("Showing CrowdCore Node logs...")
-    with open(node_out_put_file, 'r') as f:
+    with open(cc_log_path(), 'r') as f:
         while True:
             line = f.readline().strip()
             if line:
@@ -51,25 +47,33 @@ def connect():
             else:
                 time.sleep(0.1)
 
-
 def update():
-    subprocess.call(['pip', 'install', '--upgrade','--no-deps', 'crowdcores-node'])
+    subprocess.call(['pip', 'install', '--upgrade', '--no-deps', 'crowdcores-node'])
 
 def restart():
-    stop();
-    start();
+    stop()
+    start()
 
 def get_pid():
     for proc in psutil.process_iter():
         # concatenate the cmdline elements into a single string to search for crowdcores_node.py
-        if 'crowdcores_node.py' in ' '.join(proc.cmdline()):
-            return proc.pid
+        try:
+            if 'crowdcores_node.py' in ' '.join(proc.cmdline()):
+                return proc.pid
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, PermissionError):
+            print("Possibly Access Denied to process:", proc, ". Skipping...")
     return None
+
+def cc_log_path():
+    if os.name == 'posix':  # if on unix
+        return "/tmp/crowdcores_log.txt"
+    else:
+        return os.path.join(os.path.expanduser("~"), "Documents", "crowdcores_log.txt")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['start', 'stop', 'restart', 'update','connect'], help='Action to perform')
+    parser.add_argument('action', choices=['start', 'stop', 'restart', 'update', 'connect'], help='Action to perform')
     args = parser.parse_args()
 
     if args.action == 'start':

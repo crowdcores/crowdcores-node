@@ -2,3 +2,5 @@
 build/
 dist/
 crowdcores_node.egg-info
+*.pyc
+.idea/
